@@ -25,7 +25,7 @@ export const TEMPLATES: Record<TemplateId, TemplateTokens> = {
   classic: {
     id: 'classic',
     name: 'Classic',
-    description: 'Traditional serif layout — safest choice for conservative industries.',
+    description: 'Serif, traditional. Best for conservative fields — law, finance, academia.',
     accent: '#3a3a3a',
     nameColor: '#111111',
     headingStyle: 'underline',
@@ -39,7 +39,7 @@ export const TEMPLATES: Record<TemplateId, TemplateTokens> = {
   modern: {
     id: 'modern',
     name: 'Modern',
-    description: 'Confident accent color and clean sans-serif for tech and startups.',
+    description: 'Clean sans-serif with a quiet accent. Best for tech and startup roles.',
     accent: '#1f3a3d',
     nameColor: '#14171f',
     headingStyle: 'bar',
@@ -53,7 +53,7 @@ export const TEMPLATES: Record<TemplateId, TemplateTokens> = {
   minimal: {
     id: 'minimal',
     name: 'Minimal',
-    description: 'Quiet, spacious, almost no decoration — content does the talking.',
+    description: 'Quiet and spacious. Best for students and freshers — content does the talking.',
     accent: '#6b6b6b',
     nameColor: '#1a1a1a',
     headingStyle: 'plain',
@@ -67,7 +67,7 @@ export const TEMPLATES: Record<TemplateId, TemplateTokens> = {
   professional: {
     id: 'professional',
     name: 'Professional',
-    description: 'Boxed section labels and a stronger hierarchy for senior roles.',
+    description: 'Boxed labels, strong hierarchy. Best for experienced candidates and managers.',
     accent: '#8a5a1f',
     nameColor: '#14171f',
     headingStyle: 'boxed',

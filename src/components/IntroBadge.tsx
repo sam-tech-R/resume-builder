@@ -35,10 +35,13 @@ export function IntroBadge() {
       }`}
     >
       <div className="flex items-center gap-2.5 rounded-full border border-border bg-paper-raised/95 px-4 py-2 shadow-[0_4px_20px_rgba(20,23,31,0.08)] backdrop-blur">
-        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="7" fill="#1f3a3d" />
+          <path d="M10 8.5h9.2a4.3 4.3 0 0 1 1.3 8.4l3.2 6.6h-3.6l-2.8-6H13v6h-3V8.5Zm3 6.4h6a1.9 1.9 0 1 0 0-3.8h-6v3.8Z" fill="#f7f7f5" />
+        </svg>
         <span className="font-sans text-[13px] font-medium text-ink">Resume Builder</span>
         <span className="text-[13px] text-ink-soft">·</span>
-        <span className="font-mono text-[11px] tracking-wide text-ink-soft">Powered by Samyak GPT</span>
+        <span className="font-mono text-[11px] tracking-wide text-ink-soft">powered by Samyak GPT</span>
       </div>
     </div>
   );

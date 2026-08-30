@@ -134,6 +134,10 @@ export interface ResumeSettings {
   sectionSpacing: number; // 0.7 - 1.5
   margin: 'narrow' | 'normal' | 'wide';
   density: DensityPreset;
+  // Optional override for the template's accent color. null/undefined means
+  // "use whatever the template defines" — keeps templates as the default
+  // while letting users nudge the look without breaking ATS-safe styling.
+  accentColor?: string | null;
 }
 
 export interface ResumeData {

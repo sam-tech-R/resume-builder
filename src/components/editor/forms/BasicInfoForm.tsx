@@ -1,17 +1,23 @@
 import { useResume } from '../../../store/ResumeContext';
 import type { ContactInfo } from '../../../types/resume';
 import { Field, TextArea, TextInput } from '../../ui/FormControls';
+import { WritingAssist } from '../WritingAssist';
 import { PhotoUpload } from './PhotoUpload';
 
-const CONTACT_FIELDS: { key: keyof ContactInfo; label: string; placeholder: string; type?: string }[] = [
-  { key: 'fullName', label: 'Full name', placeholder: 'Jordan Rivera' },
-  { key: 'title', label: 'Professional title', placeholder: 'Software Engineer' },
-  { key: 'email', label: 'Email', placeholder: 'jordan@email.com', type: 'email' },
-  { key: 'phone', label: 'Phone', placeholder: '+1 555 123 4567' },
-  { key: 'location', label: 'Location', placeholder: 'Austin, TX' },
-  { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/jordanrivera' },
-  { key: 'github', label: 'GitHub', placeholder: 'github.com/jordanrivera' },
-  { key: 'portfolio', label: 'Portfolio', placeholder: 'jordanrivera.dev' },
+/**
+ * Placeholders are realistic-but-fictional Indian examples (example.com
+ * email, the classic reserved 98765 43210 number) so users instantly
+ * understand the expected format without anyone's real data being shown.
+ */
+const CONTACT_FIELDS: { key: keyof ContactInfo; label: string; placeholder: string; type?: string; optional?: boolean }[] = [
+  { key: 'fullName', label: 'Full name', placeholder: 'Ananya Sharma' },
+  { key: 'title', label: 'Professional title', placeholder: 'B.Tech CSE Student · Aspiring Software Engineer' },
+  { key: 'email', label: 'Email', placeholder: 'ananya.sharma@example.com', type: 'email' },
+  { key: 'phone', label: 'Phone', placeholder: '+91 98765 43210', type: 'tel' },
+  { key: 'location', label: 'Location', placeholder: 'Bengaluru, Karnataka' },
+  { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/ananya-sharma', optional: true },
+  { key: 'github', label: 'GitHub', placeholder: 'github.com/ananya-sharma', optional: true },
+  { key: 'portfolio', label: 'Portfolio (optional)', placeholder: 'ananya.dev', optional: true },
 ];
 
 export function BasicInfoForm() {
@@ -19,7 +25,7 @@ export function BasicInfoForm() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Profile photo">
+      <Field label="Profile photo (optional)">
         <PhotoUpload />
       </Field>
 
@@ -43,13 +49,22 @@ export function BasicInfoForm() {
         })}
       </div>
 
-      <Field label="Profile summary" hint="2–4 sentences. Lead with your role and strongest, most relevant strength.">
-        <TextArea
-          placeholder="Frontend-focused software engineer with 3 years building accessible, high-traffic web apps..."
+      <div>
+        <Field label="Profile summary" hint="2–4 sentences. Lead with your role or degree and your strongest relevant skills.">
+          <TextArea
+            placeholder="Final-year Computer Science student skilled in React and Node.js. Built a placement portal used by 200+ students. Seeking a software engineering role..."
+            value={resume.summary}
+            onChange={(e) => dispatch({ type: 'SET_SUMMARY', value: e.target.value })}
+          />
+        </Field>
+        <WritingAssist
+          mode="summary"
           value={resume.summary}
-          onChange={(e) => dispatch({ type: 'SET_SUMMARY', value: e.target.value })}
+          resume={resume}
+          onApply={(next) => dispatch({ type: 'SET_SUMMARY', value: next })}
+          className="mt-2"
         />
-      </Field>
+      </div>
     </div>
   );
 }

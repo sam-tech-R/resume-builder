@@ -44,8 +44,23 @@ export const CSS_FONT_FAMILY: Record<ResumeSettings['fontFamily'], string> = {
   courier: "'Courier New', Courier, monospace",
 };
 
+// Curated, print-safe accent colors. All are dark enough for body-adjacent
+// text usage and neutral enough for ATS parsing (color never carries meaning).
+export const ACCENT_PALETTE: { value: string; label: string }[] = [
+  { value: '#1f3a3d', label: 'Deep Teal' },
+  { value: '#1e3a5f', label: 'Navy' },
+  { value: '#374151', label: 'Charcoal' },
+  { value: '#6b2f3a', label: 'Maroon' },
+  { value: '#8a5a1f', label: 'Bronze' },
+  { value: '#2f5d3a', label: 'Forest' },
+];
+
 export const defaultSettings: ResumeSettings = {
   fontFamily: 'helvetica',
   ...DENSITY_PRESETS.balanced,
+  // Narrow margins are the professional default for Indian one-page resumes —
+  // they fit more real content per page without ever feeling cramped.
+  margin: 'narrow',
   density: 'balanced',
+  accentColor: null,
 };

@@ -16,12 +16,13 @@ export function LanguagesForm() {
         <EntryCard key={entry.id} title={entry.name || 'New language'} onRemove={() => remove(entry.id)}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Language">
-              <TextInput value={entry.name} onChange={(e) => update(entry.id, { name: e.target.value })} placeholder="Spanish" />
+              <TextInput value={entry.name} onChange={(e) => update(entry.id, { name: e.target.value })} placeholder="Hindi" />
             </Field>
             <Field label="Proficiency">
               <select
                 value={entry.proficiency}
                 onChange={(e) => update(entry.id, { proficiency: e.target.value as LanguageEntry['proficiency'] })}
+                aria-label="Proficiency"
                 className="w-full rounded-md border border-border bg-paper-raised px-3 py-2 text-[14px] text-ink focus:border-primary"
               >
                 {PROFICIENCIES.map((p) => (
@@ -53,24 +54,40 @@ export function LanguagesForm() {
 export function TechnicalSkillsForm() {
   const { resume, dispatch } = useResume();
   return (
-    <Field label="Technical skills" hint="Press Enter or comma after each skill.">
-      <TagListInput
-        values={resume.technicalSkills}
-        onChange={(values) => dispatch({ type: 'STRING_LIST_SET', list: 'technicalSkills', values })}
-        placeholder="TypeScript, React, PostgreSQL..."
-      />
-    </Field>
+    <div className="flex flex-col gap-3">
+      <Field label="Technical skills" hint="Press Enter or comma after each skill. Plain words work best for ATS — no bars or ratings.">
+        <TagListInput
+          values={resume.technicalSkills}
+          onChange={(values) => dispatch({ type: 'STRING_LIST_SET', list: 'technicalSkills', values })}
+          placeholder="Java, React, SQL, Figma…"
+        />
+      </Field>
+      <div className="flex flex-wrap gap-1.5">
+        {['Python', 'Java', 'SQL', 'React', 'Node.js', 'Excel', 'Git & GitHub', 'Power BI'].map((s) =>
+          resume.technicalSkills.includes(s) ? null : (
+            <button
+              key={s}
+              type="button"
+              onClick={() => dispatch({ type: 'STRING_LIST_SET', list: 'technicalSkills', values: [...resume.technicalSkills, s] })}
+              className="rounded-full border border-border px-2.5 py-1 text-[12px] text-ink-soft transition hover:border-primary/40 hover:text-primary"
+            >
+              + {s}
+            </button>
+          )
+        )}
+      </div>
+    </div>
   );
 }
 
 export function SoftSkillsForm() {
   const { resume, dispatch } = useResume();
   return (
-    <Field label="Soft skills" hint="Press Enter or comma after each skill.">
+    <Field label="Soft skills (optional)" hint="Press Enter or comma after each skill.">
       <TagListInput
         values={resume.softSkills}
         onChange={(values) => dispatch({ type: 'STRING_LIST_SET', list: 'softSkills', values })}
-        placeholder="Communication, Leadership..."
+        placeholder="Communication, Leadership, Teamwork…"
       />
     </Field>
   );
@@ -79,11 +96,11 @@ export function SoftSkillsForm() {
 export function AchievementsForm() {
   const { resume, dispatch } = useResume();
   return (
-    <Field label="Achievements" hint="Press Enter or comma after each achievement.">
+    <Field label="Achievements (optional)" hint="Press Enter after each one — hackathons, competition ranks, scholarships.">
       <TagListInput
         values={resume.achievements}
         onChange={(values) => dispatch({ type: 'STRING_LIST_SET', list: 'achievements', values })}
-        placeholder="Won first place at HackTX 2024..."
+        placeholder="Smart India Hackathon 2024 — finalist…"
       />
     </Field>
   );

@@ -32,8 +32,10 @@ export function ResumePreview() {
 }
 
 export function ResumeSheet({ resume }: { resume: ResumeData }) {
-  const tokens = TEMPLATES[resume.templateId];
   const { settings } = resume;
+  // The tokens object drives every template-specific color, so overriding the
+  // accent here flows through the whole preview automatically.
+  const tokens: TemplateTokens = { ...TEMPLATES[resume.templateId], accent: settings.accentColor || TEMPLATES[resume.templateId].accent };
   const sections = getVisibleSections(resume);
   const { contact } = resume;
   const hasContactLine = [contact.email, contact.phone, contact.location].some(Boolean);
@@ -250,7 +252,7 @@ function PreviewSection({
             </div>
             <div style={{ fontSize: fs(12), color: '#333' }}>
               {[e.degree, e.field].filter(Boolean).join(' in ')}
-              {e.gpa ? ` · GPA ${e.gpa}` : ''}
+              {e.gpa ? ` · ${e.gpa}` : ''}
             </div>
             {e.description && (
               <p className="mt-0.5" style={{ fontSize: fs(12), color: '#222' }}>

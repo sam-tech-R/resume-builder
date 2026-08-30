@@ -24,31 +24,32 @@ export function EducationForm() {
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-[12.5px] text-ink-soft">Add your most recent qualification first — Class X/XII and college both count.</p>
       {resume.education.map((entry) => (
         <EntryCard key={entry.id} title={entry.institution || 'New entry'} onRemove={() => remove(entry.id)}>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Institution">
-              <TextInput value={entry.institution} onChange={(e) => update(entry.id, { institution: e.target.value })} placeholder="University of Texas" />
+              <TextInput value={entry.institution} onChange={(e) => update(entry.id, { institution: e.target.value })} placeholder="RV College of Engineering" />
             </Field>
             <Field label="Location">
-              <TextInput value={entry.location} onChange={(e) => update(entry.id, { location: e.target.value })} placeholder="Austin, TX" />
+              <TextInput value={entry.location} onChange={(e) => update(entry.id, { location: e.target.value })} placeholder="Bengaluru, Karnataka" />
             </Field>
             <Field label="Degree">
-              <TextInput value={entry.degree} onChange={(e) => update(entry.id, { degree: e.target.value })} placeholder="B.S." />
+              <TextInput value={entry.degree} onChange={(e) => update(entry.id, { degree: e.target.value })} placeholder="B.Tech / B.Com / Class XII (CBSE)" />
             </Field>
             <Field label="Field of study">
-              <TextInput value={entry.field} onChange={(e) => update(entry.id, { field: e.target.value })} placeholder="Computer Science" />
+              <TextInput value={entry.field} onChange={(e) => update(entry.id, { field: e.target.value })} placeholder="Computer Science & Engineering" />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Start date">
-                <TextInput value={entry.startDate} onChange={(e) => update(entry.id, { startDate: e.target.value })} placeholder="Aug 2020" />
+              <Field label="Start year">
+                <TextInput value={entry.startDate} onChange={(e) => update(entry.id, { startDate: e.target.value })} placeholder="2022" />
               </Field>
-              <Field label="End date">
-                <TextInput value={entry.endDate} onChange={(e) => update(entry.id, { endDate: e.target.value })} placeholder="May 2024" />
+              <Field label="End year">
+                <TextInput value={entry.endDate} onChange={(e) => update(entry.id, { endDate: e.target.value })} placeholder="2026" />
               </Field>
             </div>
-            <Field label="GPA (optional)">
-              <TextInput value={entry.gpa} onChange={(e) => update(entry.id, { gpa: e.target.value })} placeholder="3.8 / 4.0" />
+            <Field label="Grade / CGPA (optional)">
+              <TextInput value={entry.gpa} onChange={(e) => update(entry.id, { gpa: e.target.value })} placeholder="8.7 / 10 CGPA" />
             </Field>
           </div>
           <Field label="Notes (optional)" hint="Relevant coursework, honors, thesis topic.">

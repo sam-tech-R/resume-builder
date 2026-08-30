@@ -1,4 +1,5 @@
 import type { ResumeData } from '../types/resume';
+import { findWeakWording } from './writingAssist';
 
 export interface QualityCheck {
   id: string;
@@ -41,6 +42,16 @@ export function runQualityChecklist(resume: ResumeData): QualityCheck[] {
     status: contactOk ? 'pass' : 'fail',
     message: contactOk ? 'Name, email, and a way to reach you are filled in.' : 'Add your name, email, and phone or location.',
   });
+
+  const emailOk = !contact.email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim());
+  if (!emailOk) {
+    checks.push({
+      id: 'email-format',
+      label: 'Email format',
+      status: 'fail',
+      message: 'The email address doesn\'t look valid — recruiters (and ATS) need a working email.',
+    });
+  }
 
   checks.push({
     id: 'summary',
@@ -102,6 +113,30 @@ export function runQualityChecklist(resume: ResumeData): QualityCheck[] {
       : 'Try adding a number to a bullet (e.g. "reduced load time by 40%").',
   });
 
+  const allBullets = [...resume.experience, ...resume.internships, ...resume.projects].flatMap((e) => e.bullets.filter((b) => b.trim()));
+  const longBullets = allBullets.filter((b) => b.trim().split(/\s+/).length > 32).length;
+  checks.push({
+    id: 'bullet-length',
+    label: 'Bullet readability',
+    status: longBullets === 0 ? 'pass' : 'warn',
+    message:
+      longBullets === 0
+        ? 'Bullet points are a readable length.'
+        : `${longBullets} bullet ${longBullets === 1 ? 'point is' : 'points are'} very long — aim for 1–2 lines each.`,
+  });
+
+  const weakSources = [resume.summary, ...allBullets];
+  const weakHits = weakSources.flatMap((t) => findWeakWording(t));
+  checks.push({
+    id: 'vague-wording',
+    label: 'Concise wording',
+    status: weakHits.length === 0 ? 'pass' : 'warn',
+    message:
+      weakHits.length === 0
+        ? 'No obvious filler phrases detected.'
+        : `${weakHits.length} vague phrase${weakHits.length === 1 ? '' : 's'} found — e.g. ${weakHits[0].hint}. Use the ✦ Improve buttons to fix them.`,
+  });
+
   return checks;
 }
 
@@ -110,3 +145,4 @@ export function qualityScore(checks: QualityCheck[]): number {
   const total = checks.reduce((sum, c) => sum + weight[c.status], 0);
   return Math.round((total / checks.length) * 100);
 }
+

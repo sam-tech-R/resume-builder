@@ -1,6 +1,8 @@
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import type { ReactNode } from 'react';
 import type { ResumeData, ResumeSettings, SectionMeta } from '../../types/resume';
-import { TEMPLATES, type TemplateTokens } from '../../store/templates';
+import type { TemplateTokens } from '../../store/templates';
+import { TEMPLATES } from '../../store/templates';
 import { PDF_FONT_FAMILY, MARGIN_PX } from '../../utils/settingsPresets';
 import { dateRange, getVisibleSections } from '../../utils/resumeSections';
 
@@ -77,7 +79,7 @@ function PdfHeading({ tokens, headingFs, children }: { tokens: TemplateTokens; h
 export function ResumePdfDocument({ resume, bakedPhotoSrc }: { resume: ResumeData; bakedPhotoSrc: string | null }) {
   const { settings } = resume;
   const styles = makeStyles(settings);
-  const tokens = TEMPLATES[resume.templateId];
+  const tokens: TemplateTokens = { ...TEMPLATES[resume.templateId], accent: settings.accentColor || TEMPLATES[resume.templateId].accent };
   const sections = getVisibleSections(resume);
   const { contact } = resume;
   const contactParts = [contact.email, contact.phone, contact.location].filter(Boolean).join('   |   ');
@@ -107,11 +109,14 @@ export function ResumePdfDocument({ resume, bakedPhotoSrc }: { resume: ResumeDat
         </View>
 
         {sections.map((section) => (
-          <View key={section.id} style={styles.section} wrap={false}>
-            <PdfHeading tokens={tokens} headingFs={10.5 * settings.headingScale}>
-              {label(section.label)}
-            </PdfHeading>
-            <PdfSectionBody section={section} resume={resume} tokens={tokens} styles={styles} />
+          <View key={section.id} style={styles.section}>
+            <PdfSection
+              section={section}
+              resume={resume}
+              tokens={tokens}
+              styles={styles}
+              heading={<PdfHeading tokens={tokens} headingFs={10.5 * settings.headingScale}>{label(section.label)}</PdfHeading>}
+            />
           </View>
         ))}
       </Page>
@@ -134,132 +139,204 @@ function Bullets({ items, styles }: { items: string[]; styles: ReturnType<typeof
   );
 }
 
-function PdfSectionBody({
+/**
+ * Renders one section. Page-break policy: entries are atomic (never split
+ * mid-entry), the heading always stays attached to the first entry, and the
+ * section itself can flow across pages — so long resumes fill each page
+ * naturally instead of jumping a whole section to the next page.
+ */
+function PdfSection({
   section,
   resume,
   tokens,
   styles,
+  heading,
 }: {
   section: SectionMeta;
   resume: ResumeData;
   tokens: TemplateTokens;
   styles: ReturnType<typeof makeStyles>;
+  heading: ReactNode;
 }) {
   const dateStyle = { ...styles.entryMeta, color: tokens.accent };
+  const withHeading = (first: ReactNode) => (
+    <View wrap={false}>
+      {heading}
+      {first}
+    </View>
+  );
 
-  if (section.kind === 'summary') return <Text style={styles.plainText}>{resume.summary}</Text>;
+  if (section.kind === 'summary')
+    return withHeading(<Text style={styles.plainText}>{resume.summary}</Text>);
 
-  if (section.kind === 'experience' || section.kind === 'internships')
+  if (section.kind === 'experience' || section.kind === 'internships') {
+    const entries = resume[section.kind];
     return (
       <>
-        {resume[section.kind].map((e) => (
-          <View key={e.id} style={styles.entry} wrap={false}>
-            <View style={styles.entryHeaderRow}>
-              <Text style={styles.entryTitle}>
-                {e.role}
-                {e.company ? `, ${e.company}` : ''}
+        {entries.map((e, i) => {
+          const entry = (
+            <View style={i === entries.length - 1 ? undefined : styles.entry}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.entryTitle}>
+                  {e.role}
+                  {e.company ? `, ${e.company}` : ''}
+                </Text>
+                <Text style={dateStyle}>{dateRange(e.startDate, e.endDate)}</Text>
+              </View>
+              {e.location ? <Text style={styles.entrySub}>{e.location}</Text> : null}
+              <Bullets items={e.bullets} styles={styles} />
+            </View>
+          );
+          return (
+            <View key={e.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
+            </View>
+          );
+        })}
+      </>
+    );
+  }
+
+  if (section.kind === 'projects') {
+    const projects = resume.projects;
+    return (
+      <>
+        {projects.map((p, i) => {
+          const entry = (
+            <View style={i === projects.length - 1 ? undefined : styles.entry}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.entryTitle}>
+                  {p.name}
+                  {p.techStack ? ` — ${p.techStack}` : ''}
+                </Text>
+                <Text style={dateStyle}>{dateRange(p.startDate, p.endDate)}</Text>
+              </View>
+              <Bullets items={p.bullets} styles={styles} />
+            </View>
+          );
+          return (
+            <View key={p.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
+            </View>
+          );
+        })}
+      </>
+    );
+  }
+
+  if (section.kind === 'education') {
+    const education = resume.education;
+    return (
+      <>
+        {education.map((e, i) => {
+          const entry = (
+            <View style={i === education.length - 1 ? undefined : styles.entry}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.entryTitle}>{e.institution}</Text>
+                <Text style={dateStyle}>{dateRange(e.startDate, e.endDate)}</Text>
+              </View>
+              <Text style={styles.entrySub}>
+                {[e.degree, e.field].filter(Boolean).join(' in ')}
+                {e.gpa ? ` · ${e.gpa}` : ''}
               </Text>
-              <Text style={dateStyle}>{dateRange(e.startDate, e.endDate)}</Text>
+              {e.description ? <Text style={[styles.plainText, { marginTop: 2 }]}>{e.description}</Text> : null}
             </View>
-            {e.location ? <Text style={styles.entrySub}>{e.location}</Text> : null}
-            <Bullets items={e.bullets} styles={styles} />
-          </View>
-        ))}
+          );
+          return (
+            <View key={e.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
+            </View>
+          );
+        })}
       </>
     );
+  }
 
-  if (section.kind === 'projects')
+  if (section.kind === 'technicalSkills')
+    return withHeading(<Text style={styles.plainText}>{resume.technicalSkills.join('   ·   ')}</Text>);
+  if (section.kind === 'softSkills')
+    return withHeading(<Text style={styles.plainText}>{resume.softSkills.join('   ·   ')}</Text>);
+  if (section.kind === 'achievements')
+    return withHeading(<Bullets items={resume.achievements} styles={styles} />);
+
+  if (section.kind === 'certifications') {
+    const certs = resume.certifications;
     return (
       <>
-        {resume.projects.map((p) => (
-          <View key={p.id} style={styles.entry} wrap={false}>
-            <View style={styles.entryHeaderRow}>
-              <Text style={styles.entryTitle}>
-                {p.name}
-                {p.techStack ? ` — ${p.techStack}` : ''}
-              </Text>
-              <Text style={dateStyle}>{dateRange(p.startDate, p.endDate)}</Text>
+        {certs.map((c, i) => {
+          const entry = (
+            <View style={i === certs.length - 1 ? undefined : { marginBottom: 4 }}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.plainText}>
+                  {c.name}
+                  {c.issuer ? ` — ${c.issuer}` : ''}
+                </Text>
+                <Text style={dateStyle}>{c.date}</Text>
+              </View>
             </View>
-            <Bullets items={p.bullets} styles={styles} />
-          </View>
-        ))}
+          );
+          return (
+            <View key={c.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
+            </View>
+          );
+        })}
       </>
     );
+  }
 
-  if (section.kind === 'education')
+  if (section.kind === 'awards') {
+    const awards = resume.awards;
     return (
       <>
-        {resume.education.map((e) => (
-          <View key={e.id} style={styles.entry} wrap={false}>
-            <View style={styles.entryHeaderRow}>
-              <Text style={styles.entryTitle}>{e.institution}</Text>
-              <Text style={dateStyle}>{dateRange(e.startDate, e.endDate)}</Text>
+        {awards.map((a, i) => {
+          const entry = (
+            <View style={i === awards.length - 1 ? undefined : styles.entry}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.entryTitle}>
+                  {a.title}
+                  {a.issuer ? ` — ${a.issuer}` : ''}
+                </Text>
+                <Text style={dateStyle}>{a.date}</Text>
+              </View>
+              {a.description ? <Text style={styles.entrySub}>{a.description}</Text> : null}
             </View>
-            <Text style={styles.entrySub}>
-              {[e.degree, e.field].filter(Boolean).join(' in ')}
-              {e.gpa ? ` · GPA ${e.gpa}` : ''}
-            </Text>
-            {e.description ? <Text style={[styles.plainText, { marginTop: 2 }]}>{e.description}</Text> : null}
-          </View>
-        ))}
-      </>
-    );
-
-  if (section.kind === 'technicalSkills') return <Text style={styles.plainText}>{resume.technicalSkills.join('   ·   ')}</Text>;
-  if (section.kind === 'softSkills') return <Text style={styles.plainText}>{resume.softSkills.join('   ·   ')}</Text>;
-  if (section.kind === 'achievements') return <Bullets items={resume.achievements} styles={styles} />;
-
-  if (section.kind === 'certifications')
-    return (
-      <>
-        {resume.certifications.map((c) => (
-          <View key={c.id} style={[styles.entryHeaderRow, { marginBottom: 4 }]} wrap={false}>
-            <Text style={styles.plainText}>
-              {c.name}
-              {c.issuer ? ` — ${c.issuer}` : ''}
-            </Text>
-            <Text style={dateStyle}>{c.date}</Text>
-          </View>
-        ))}
-      </>
-    );
-
-  if (section.kind === 'awards')
-    return (
-      <>
-        {resume.awards.map((a) => (
-          <View key={a.id} style={styles.entry} wrap={false}>
-            <View style={styles.entryHeaderRow}>
-              <Text style={styles.entryTitle}>
-                {a.title}
-                {a.issuer ? ` — ${a.issuer}` : ''}
-              </Text>
-              <Text style={dateStyle}>{a.date}</Text>
+          );
+          return (
+            <View key={a.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
             </View>
-            {a.description ? <Text style={styles.entrySub}>{a.description}</Text> : null}
-          </View>
-        ))}
+          );
+        })}
       </>
     );
+  }
 
   if (section.kind === 'languages')
-    return <Text style={styles.plainText}>{resume.languages.map((l) => `${l.name} (${l.proficiency})`).join('   ·   ')}</Text>;
+    return withHeading(<Text style={styles.plainText}>{resume.languages.map((l) => `${l.name} (${l.proficiency})`).join('   ·   ')}</Text>);
 
   if (section.kind === 'custom') {
     const cs = resume.customSections.find((c) => c.id === section.customSectionId);
     if (!cs) return null;
     return (
       <>
-        {cs.items.map((item) => (
-          <View key={item.id} style={styles.entry} wrap={false}>
-            <View style={styles.entryHeaderRow}>
-              <Text style={styles.entryTitle}>{item.title}</Text>
-              <Text style={dateStyle}>{item.date}</Text>
+        {cs.items.map((item, i) => {
+          const entry = (
+            <View style={i === cs.items.length - 1 ? undefined : styles.entry}>
+              <View style={styles.entryHeaderRow}>
+                <Text style={styles.entryTitle}>{item.title}</Text>
+                <Text style={dateStyle}>{item.date}</Text>
+              </View>
+              {item.subtitle ? <Text style={styles.entrySub}>{item.subtitle}</Text> : null}
+              {item.description ? <Text style={[styles.plainText, { marginTop: 1 }]}>{item.description}</Text> : null}
             </View>
-            {item.subtitle ? <Text style={styles.entrySub}>{item.subtitle}</Text> : null}
-            {item.description ? <Text style={[styles.plainText, { marginTop: 1 }]}>{item.description}</Text> : null}
-          </View>
-        ))}
+          );
+          return (
+            <View key={item.id} wrap={false}>
+              {i === 0 ? withHeading(entry) : entry}
+            </View>
+          );
+        })}
       </>
     );
   }

@@ -15,16 +15,16 @@ export function CertificationsForm() {
         <EntryCard key={entry.id} title={entry.name || 'New certification'} onRemove={() => remove(entry.id)}>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Certification name">
-              <TextInput value={entry.name} onChange={(e) => update(entry.id, { name: e.target.value })} placeholder="AWS Certified Solutions Architect" />
+              <TextInput value={entry.name} onChange={(e) => update(entry.id, { name: e.target.value })} placeholder="AWS Certified Cloud Practitioner" />
             </Field>
             <Field label="Issuer">
-              <TextInput value={entry.issuer} onChange={(e) => update(entry.id, { issuer: e.target.value })} placeholder="Amazon Web Services" />
+              <TextInput value={entry.issuer} onChange={(e) => update(entry.id, { issuer: e.target.value })} placeholder="Amazon Web Services / NPTEL" />
             </Field>
             <Field label="Date">
-              <TextInput value={entry.date} onChange={(e) => update(entry.id, { date: e.target.value })} placeholder="Mar 2024" />
+              <TextInput value={entry.date} onChange={(e) => update(entry.id, { date: e.target.value })} placeholder="Mar 2025" />
             </Field>
             <Field label="Credential URL (optional)">
-              <TextInput value={entry.credentialUrl} onChange={(e) => update(entry.id, { credentialUrl: e.target.value })} placeholder="credly.com/..." />
+              <TextInput value={entry.credentialUrl} onChange={(e) => update(entry.id, { credentialUrl: e.target.value })} placeholder="credly.com / nptel.ac.in" />
             </Field>
           </div>
         </EntryCard>
@@ -56,10 +56,10 @@ export function AwardsForm() {
         <EntryCard key={entry.id} title={entry.title || 'New award'} onRemove={() => remove(entry.id)}>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Award title">
-              <TextInput value={entry.title} onChange={(e) => update(entry.id, { title: e.target.value })} placeholder="Dean's List" />
+              <TextInput value={entry.title} onChange={(e) => update(entry.id, { title: e.target.value })} placeholder="Dean's List / Hackathon Winner" />
             </Field>
             <Field label="Issuer">
-              <TextInput value={entry.issuer} onChange={(e) => update(entry.id, { issuer: e.target.value })} placeholder="University of Texas" />
+              <TextInput value={entry.issuer} onChange={(e) => update(entry.id, { issuer: e.target.value })} placeholder="RV College of Engineering" />
             </Field>
             <Field label="Date">
               <TextInput value={entry.date} onChange={(e) => update(entry.id, { date: e.target.value })} placeholder="2023" />

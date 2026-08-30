@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useResume } from '../../store/ResumeContext';
+import { findMissingKeywords } from '../../utils/keywordMatch';
 import { qualityScore, runQualityChecklist } from '../../utils/qualityChecklist';
 
 const STATUS_STYLES = {
@@ -38,6 +40,65 @@ export function QualityPanel() {
           );
         })}
       </ul>
+      <KeywordMatcher />
     </div>
   );
 }
+
+/**
+ * Optional job-description tailoring: paste a JD, see which meaningful terms
+ * don't appear anywhere in your resume. Runs entirely in the browser.
+ */
+function KeywordMatcher() {
+  const { resume } = useResume();
+  const [jd, setJd] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const missing = jd.trim().length > 60 ? findMissingKeywords(jd, resume) : [];
+
+  return (
+    <div className="rounded-md border border-border p-3">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
+        <span className="text-[13px] font-medium text-ink">Match against a job description</span>
+        <span className={`text-[12px] text-ink-soft transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
+      </button>
+      <p className="mt-1 text-[11.5px] text-ink-soft">
+        Paste a job posting and we'll list terms missing from your resume. Nothing leaves your device.
+      </p>
+      {open && (
+        <div className="mt-2.5 flex flex-col gap-2">
+          <textarea
+            value={jd}
+            onChange={(e) => setJd(e.target.value)}
+            rows={5}
+            placeholder="Paste the job description here (responsibilities, requirements, skills)…"
+            aria-label="Job description"
+            className="w-full rounded-md border border-border bg-paper-raised px-3 py-2 text-[13px] text-ink focus:border-primary"
+          />
+          {jd.trim().length > 60 && (
+            <div>
+              {missing.length === 0 ? (
+                <p className="text-[12.5px] font-medium text-primary">No obvious keyword gaps found — good coverage.</p>
+              ) : (
+                <>
+                  <p className="text-[12px] font-medium text-ink">Terms not yet in your resume:</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {missing.map((k) => (
+                      <span key={k} className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[12px] text-ink">
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11.5px] text-ink-soft">
+                    Only add the ones that genuinely match your experience — never keyword-stuff.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+

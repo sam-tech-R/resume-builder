@@ -43,11 +43,13 @@ export function SmallButton({
   onClick,
   variant = 'default',
   type = 'button',
+  ariaLabel,
 }: {
   children: ReactNode;
   onClick?: () => void;
   variant?: 'default' | 'danger' | 'primary';
   type?: 'button' | 'submit';
+  ariaLabel?: string;
 }) {
   const styles = {
     default: 'border border-border text-ink hover:bg-paper',
@@ -55,7 +57,7 @@ export function SmallButton({
     primary: 'border border-transparent bg-primary text-paper-raised hover:bg-primary-soft',
   }[variant];
   return (
-    <button type={type} onClick={onClick} className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition ${styles}`}>
+    <button type={type} onClick={onClick} aria-label={ariaLabel} className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition ${styles}`}>
       {children}
     </button>
   );
@@ -65,9 +67,9 @@ export function SmallButton({
 export function EntryCard({ children, onRemove, title }: { children: ReactNode; onRemove: () => void; title: string }) {
   return (
     <div className="rounded-lg border border-border bg-paper-raised p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-soft">{title}</span>
-        <SmallButton variant="danger" onClick={onRemove}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="truncate text-[12px] font-semibold uppercase tracking-wide text-ink-soft">{title}</span>
+        <SmallButton variant="danger" onClick={onRemove} ariaLabel={`Remove ${title}`}>
           Remove
         </SmallButton>
       </div>
@@ -86,6 +88,15 @@ export function TagListInput({
   onChange: (values: string[]) => void;
   placeholder?: string;
 }) {
+  const commit = (raw: string) => {
+    // Split on commas so pasting "React, Node, SQL" produces three tags.
+    const parts = raw
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length > 0) onChange([...values, ...parts]);
+  };
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
@@ -106,13 +117,22 @@ export function TagListInput({
       <input
         type="text"
         placeholder={placeholder ?? 'Type and press Enter'}
+        aria-label={placeholder ?? 'Type and press Enter'}
         className={`${inputClasses} mt-2`}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
-            const val = e.currentTarget.value.trim();
-            if (val) onChange([...values, val]);
+            commit(e.currentTarget.value);
             e.currentTarget.value = '';
+          } else if (e.key === 'Backspace' && e.currentTarget.value === '' && values.length > 0) {
+            onChange(values.slice(0, -1));
+          }
+        }}
+        onPaste={(e) => {
+          const pasted = e.clipboardData.getData('text');
+          if (pasted.includes(',')) {
+            e.preventDefault();
+            commit(pasted);
           }
         }}
       />

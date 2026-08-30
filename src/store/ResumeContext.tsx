@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
-import type { ResumeData } from '../types/resume';
+import type { PhotoData, ResumeData } from '../types/resume';
 import { defaultResume } from './defaultResume';
 import { resumeReducer, type ResumeAction } from './resumeReducer';
 
@@ -9,13 +9,25 @@ function loadInitialState(): ResumeData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultResume;
-    const parsed = JSON.parse(raw) as Partial<ResumeData> & { photo?: unknown; template?: unknown };
+    const parsed = JSON.parse(raw) as Partial<ResumeData>;
 
-    // Photo shape changed from a plain string to a { src, zoom, offset, shape }
-    // object. A draft saved before that change can't be reused as-is, so drop
-    // it rather than crash the renderer — everything else in the draft is
-    // still safe to keep.
-    const photo = parsed.photo && typeof parsed.photo === 'object' ? (parsed.photo as ResumeData['photo']) : null;
+    // A draft saved by an older version (or corrupted storage) must never
+    // crash the editor. Every field is validated back to a safe value and
+    // any sections missing from an old draft are merged in from the defaults.
+    const photo =
+      parsed.photo && typeof parsed.photo === 'object' && typeof (parsed.photo as PhotoData).src === 'string'
+        ? (parsed.photo as PhotoData)
+        : null;
+
+    const asArray = <T,>(value: unknown, fallback: T[]): T[] => (Array.isArray(value) ? (value as T[]) : fallback);
+
+    const sectionOrder = asArray(parsed.sectionOrder, defaultResume.sectionOrder)
+      .filter((s) => s && typeof s.id === 'string' && typeof s.kind === 'string')
+      .map((s) => ({ ...s, visible: s.visible !== false, label: typeof s.label === 'string' ? s.label : s.id }));
+    // Merge in any built-in sections the old draft didn't know about.
+    for (const def of defaultResume.sectionOrder) {
+      if (!sectionOrder.some((s) => s.id === def.id)) sectionOrder.push(def);
+    }
 
     return {
       ...defaultResume,
@@ -24,6 +36,19 @@ function loadInitialState(): ResumeData {
       settings: { ...defaultResume.settings, ...parsed.settings },
       templateId: parsed.templateId ?? defaultResume.templateId,
       photo,
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+      education: asArray(parsed.education, []),
+      experience: asArray(parsed.experience, []),
+      internships: asArray(parsed.internships, []),
+      projects: asArray(parsed.projects, []),
+      technicalSkills: asArray(parsed.technicalSkills, []),
+      softSkills: asArray(parsed.softSkills, []),
+      certifications: asArray(parsed.certifications, []),
+      achievements: asArray(parsed.achievements, []),
+      languages: asArray(parsed.languages, []),
+      awards: asArray(parsed.awards, []),
+      customSections: asArray(parsed.customSections, []),
+      sectionOrder,
     };
   } catch {
     return defaultResume;

@@ -1,11 +1,11 @@
 import { useResume } from '../../store/ResumeContext';
 import type { ResumeSettings } from '../../types/resume';
-import { SETTINGS_RANGES } from '../../utils/settingsPresets';
+import { ACCENT_PALETTE, SETTINGS_RANGES } from '../../utils/settingsPresets';
 
 const FONT_OPTIONS: { value: ResumeSettings['fontFamily']; label: string }[] = [
-  { value: 'helvetica', label: 'Sans (Helvetica)' },
-  { value: 'times', label: 'Serif (Times)' },
-  { value: 'courier', label: 'Mono (Courier)' },
+  { value: 'helvetica', label: 'Sans — Helvetica (modern, safe)' },
+  { value: 'times', label: 'Serif — Times (traditional)' },
+  { value: 'courier', label: 'Mono — Courier (technical)' },
 ];
 
 const PRESETS: { value: 'compact' | 'balanced' | 'spacious'; label: string }[] = [
@@ -25,17 +25,19 @@ function Slider({
   value,
   onChange,
   range,
+  format,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
   range: { min: number; max: number; step: number };
+  format?: (v: number) => string;
 }) {
   return (
     <label className="block">
       <span className="mb-1 flex justify-between text-[12px] font-medium text-ink">
         <span>{label}</span>
-        <span className="text-ink-soft">{value.toFixed(2)}</span>
+        <span className="text-ink-soft">{format ? format(value) : value.toFixed(2)}</span>
       </span>
       <input
         type="range"
@@ -45,10 +47,12 @@ function Slider({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full accent-primary"
+        aria-label={label}
       />
     </label>
   );
 }
+
 
 export function CustomizationPanel() {
   const { resume, dispatch } = useResume();
@@ -64,7 +68,8 @@ export function CustomizationPanel() {
               key={p.value}
               type="button"
               onClick={() => dispatch({ type: 'APPLY_DENSITY_PRESET', preset: p.value })}
-              className={`flex-1 rounded-md border px-2 py-1.5 text-[12.5px] font-medium transition ${
+              aria-pressed={settings.density === p.value}
+              className={`min-h-[36px] flex-1 rounded-md border px-2 py-1.5 text-[12.5px] font-medium transition ${
                 settings.density === p.value ? 'border-primary bg-primary text-paper-raised' : 'border-border text-ink hover:bg-paper'
               }`}
             >
@@ -97,7 +102,8 @@ export function CustomizationPanel() {
               key={m.value}
               type="button"
               onClick={() => dispatch({ type: 'SET_SETTING', patch: { margin: m.value } })}
-              className={`flex-1 rounded-md border px-2 py-1.5 text-[12.5px] font-medium transition ${
+              aria-pressed={settings.margin === m.value}
+              className={`min-h-[36px] flex-1 rounded-md border px-2 py-1.5 text-[12.5px] font-medium transition ${
                 settings.margin === m.value ? 'border-primary bg-primary text-paper-raised' : 'border-border text-ink hover:bg-paper'
               }`}
             >
@@ -105,32 +111,87 @@ export function CustomizationPanel() {
             </button>
           ))}
         </div>
+        <p className="mt-1.5 text-[11.5px] text-ink-soft">Narrow fits the most content — the usual choice for one-page Indian resumes.</p>
       </div>
 
+      <AccentPicker />
+      <Sliders />
+    </div>
+  );
+}
+
+function AccentPicker() {
+  const { resume, dispatch } = useResume();
+  const { settings } = resume;
+  return (
+    <div>
+      <span className="mb-1.5 block text-[13px] font-medium text-ink">Accent color</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => dispatch({ type: 'SET_SETTING', patch: { accentColor: null } })}
+          aria-pressed={!settings.accentColor}
+          className={`flex min-h-[36px] items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition ${
+            !settings.accentColor ? 'border-primary bg-primary/5 text-primary' : 'border-border text-ink-soft hover:bg-paper'
+          }`}
+        >
+          <span className="h-3.5 w-3.5 rounded-full border border-border" aria-hidden="true" />
+          Template default
+        </button>
+        {ACCENT_PALETTE.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            onClick={() => dispatch({ type: 'SET_SETTING', patch: { accentColor: c.value } })}
+            aria-pressed={settings.accentColor === c.value}
+            aria-label={`Accent color: ${c.label}`}
+            title={c.label}
+            className={`h-8 w-8 rounded-full border-2 transition ${
+              settings.accentColor === c.value ? 'border-ink' : 'border-transparent hover:border-border'
+            }`}
+            style={{ backgroundColor: c.value }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function Sliders() {
+  const { resume, dispatch } = useResume();
+  const { settings } = resume;
+  const patch = (p: Partial<ResumeSettings>) => dispatch({ type: 'SET_SETTING', patch: p });
+  return (
+    <>
       <Slider
         label="Font size"
         value={settings.fontSizeScale}
         range={SETTINGS_RANGES.fontSizeScale}
-        onChange={(v) => dispatch({ type: 'SET_SETTING', patch: { fontSizeScale: v } })}
+        onChange={(v) => patch({ fontSizeScale: v })}
+        format={(v) => `${Math.round(v * 100)}%`}
       />
       <Slider
         label="Heading size"
         value={settings.headingScale}
         range={SETTINGS_RANGES.headingScale}
-        onChange={(v) => dispatch({ type: 'SET_SETTING', patch: { headingScale: v } })}
+        onChange={(v) => patch({ headingScale: v })}
+        format={(v) => `${Math.round(v * 100)}%`}
       />
       <Slider
         label="Line spacing"
         value={settings.lineSpacing}
         range={SETTINGS_RANGES.lineSpacing}
-        onChange={(v) => dispatch({ type: 'SET_SETTING', patch: { lineSpacing: v } })}
+        onChange={(v) => patch({ lineSpacing: v })}
       />
       <Slider
         label="Section spacing"
         value={settings.sectionSpacing}
         range={SETTINGS_RANGES.sectionSpacing}
-        onChange={(v) => dispatch({ type: 'SET_SETTING', patch: { sectionSpacing: v } })}
+        onChange={(v) => patch({ sectionSpacing: v })}
+        format={(v) => `${Math.round(v * 100)}%`}
       />
-    </div>
+    </>
   );
 }
+
